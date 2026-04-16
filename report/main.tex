@@ -1,0 +1,62 @@
+\documentclass[12pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\title{Agentic AI Fleet Management Assistant\\End-Sem Project Report}
+\author{Your Name}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This report presents an agentic AI fleet management assistant that autonomously analyzes vehicle maintenance risks, retrieves guideline evidence using retrieval-augmented generation (RAG), and generates structured servicing recommendations. The system uses a LangGraph workflow with explicit state transitions and provides a modern deployable user interface.
+\end{abstract}
+
+\section{Problem Statement}
+Fleet operators require timely maintenance decisions across many vehicles. Manual decision-making can miss safety-critical patterns. The objective is to build an assistant that reasons over fleet health, aligns recommendations with maintenance references, and produces auditable structured outputs.
+
+\section{System Design}
+\subsection{Input-Output Specification}
+\textbf{Input:} Fleet data table and maintenance query.\\
+\textbf{Output:} Health summary, prioritized action plan, retrieved sources, and operational disclaimer.
+
+\subsection{Architecture}
+The workflow consists of three nodes:
+\begin{enumerate}[noitemsep]
+    \item Risk analysis node (deterministic scoring)
+    \item RAG retrieval node (Chroma vector search over guideline corpus)
+    \item Recommendation node (structured generation with safety constraints)
+\end{enumerate}
+
+\section{Agentic Workflow and State}
+State variables include vehicle features, risk analysis results, retrieved guidelines, reasoning trace, and final recommendation object. This explicit state allows traceable planning and robust debugging.
+
+\section{RAG Pipeline}
+Guidelines are chunked, embedded, and indexed in Chroma. At inference time, the system retrieves top-k relevant chunks based on the maintenance query and uses these as grounding context for recommendations.
+
+\section{Hallucination Mitigation}
+\begin{itemize}[noitemsep]
+    \item Retrieval-grounded recommendation context
+    \item Structured schema output to constrain claims
+    \item Conservative fallback strategy when API or evidence is limited
+    \item Mandatory safety disclaimer for responsible AI operation
+\end{itemize}
+
+\section{Results and Discussion}
+Include:
+\begin{itemize}
+    \item Qualitative examples of recommendations for high-risk vehicles
+    \item Comparative observations across different fleet conditions
+    \item Failure modes (missing data, out-of-range telemetry) and handling
+\end{itemize}
+
+\section{Deployment}
+The application is packaged for Streamlit deployment (Share Streamlit or Hugging Face Spaces). Public hosting link should be included in final submission.
+
+\section{Conclusion}
+The project demonstrates an end-to-end agentic AI assistant for practical fleet maintenance planning with explainable stateful reasoning and deployment-ready UX.
+
+\end{document}

@@ -9,34 +9,40 @@ from src.workflow import build_graph
 
 load_dotenv()
 
-st.set_page_config(page_title="FleetAI Assistant", page_icon="🚚", layout="wide")
+st.set_page_config(page_title="Agentic Data Analysis", page_icon="🤖", layout="wide")
 
 st.markdown(
     """
     <style>
-        .stApp { background: linear-gradient(135deg, #0f1117 0%, #161b22 100%); color: #e6edf3; }
+        .stApp { background: #0b0f19; color: #e6edf3; }
+        .block-container { padding-top: 1.4rem; padding-bottom: 2rem; }
         .main-card {
-            background: rgba(33, 38, 45, 0.7); border: 1px solid #30363d; border-radius: 16px;
-            padding: 1.2rem; margin-bottom: 1rem;
+            background: rgba(19, 27, 44, 0.86); border: 1px solid #27334d; border-radius: 16px;
+            padding: 1.1rem 1.2rem; margin-bottom: 1rem;
         }
-        .title-glow { color: #58a6ff; font-weight: 700; letter-spacing: 0.5px; }
+        .title-glow { color: #dbe8ff; font-weight: 700; letter-spacing: 0.4px; margin-bottom: 0.2rem; }
+        .subtitle { color: #8ca4d6; margin-bottom: 1rem; font-size: 0.95rem; }
+        .center-wrap { max-width: 920px; margin: 0 auto; }
+        .small-note { color: #9bb0d8; font-size: 0.84rem; margin-top: 0.35rem; }
+        .stButton > button {
+            width: 100%;
+            background: linear-gradient(90deg, #4b6bff 0%, #3954d6 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+        }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-st.markdown('<h1 class="title-glow">FleetAI Agentic Maintenance Assistant</h1>', unsafe_allow_html=True)
-st.caption("Autonomous fleet risk reasoning + RAG-grounded service planning")
-
-with st.sidebar:
-    st.header("Input Actions")
-    num_rows = st.slider("Number of vehicles", min_value=1, max_value=20, value=4)
-    query = st.text_area(
-        "Maintenance query",
-        value="Prioritize upcoming service actions for safety-critical vehicles.",
-        height=120,
-    )
-    run = st.button("Run Agent Workflow", width="stretch")
+st.markdown('<div class="center-wrap">', unsafe_allow_html=True)
+st.markdown('<h2 class="title-glow">Agentic Data Analysis</h2>', unsafe_allow_html=True)
+st.markdown(
+    '<div class="subtitle">Analyze fleet telemetry and generate AI-guided maintenance recommendations.</div>',
+    unsafe_allow_html=True,
+)
 
 base_rows = [
     {
@@ -77,6 +83,9 @@ base_rows = [
     },
 ]
 
+st.markdown('<div class="main-card">', unsafe_allow_html=True)
+st.markdown("#### Input Parameters")
+num_rows = st.slider("Number of Vehicles", min_value=1, max_value=20, value=4)
 while len(base_rows) < num_rows:
     idx = len(base_rows) + 1
     base_rows.append(
@@ -90,11 +99,7 @@ while len(base_rows) < num_rows:
             "days_since_last_service": 30,
         }
     )
-
 fleet_df = pd.DataFrame(base_rows[:num_rows])
-
-st.markdown('<div class="main-card">', unsafe_allow_html=True)
-st.subheader("Fleet Dataset (Entry-Based Input)")
 fleet_df = st.data_editor(
     fleet_df,
     num_rows="dynamic",
@@ -102,27 +107,40 @@ fleet_df = st.data_editor(
     hide_index=True,
     column_config={
         "vehicle_id": st.column_config.TextColumn("Vehicle ID", required=True),
-        "mileage": st.column_config.NumberColumn("Mileage", min_value=0),
-        "engine_temperature": st.column_config.NumberColumn("Engine Temp (C)", min_value=0),
-        "oil_quality": st.column_config.NumberColumn("Oil Quality (%)", min_value=0, max_value=100),
-        "brake_wear": st.column_config.NumberColumn("Brake Wear (%)", min_value=0, max_value=100),
-        "battery_health": st.column_config.NumberColumn("Battery Health (%)", min_value=0, max_value=100),
-        "days_since_last_service": st.column_config.NumberColumn("Days Since Last Service", min_value=0),
+        "mileage": st.column_config.NumberColumn("Mileage", min_value=0, step=500),
+        "engine_temperature": st.column_config.NumberColumn("Engine Temp", min_value=0, step=1),
+        "oil_quality": st.column_config.NumberColumn("Oil Quality", min_value=0, max_value=100, step=1),
+        "brake_wear": st.column_config.NumberColumn("Brake Wear", min_value=0, max_value=100, step=1),
+        "battery_health": st.column_config.NumberColumn("Battery Health", min_value=0, max_value=100, step=1),
+        "days_since_last_service": st.column_config.NumberColumn("Days Since Last Service", min_value=0, step=1),
     },
 )
+query = st.text_area(
+    "Analysis Goal",
+    value="Prioritize upcoming service actions for safety-critical vehicles.",
+    height=80,
+)
+st.markdown('<div class="small-note">Tip: edit rows directly and click Analyze to run the full workflow.</div>', unsafe_allow_html=True)
+run = st.button("Analyze Fleet Data")
+st.markdown("</div>", unsafe_allow_html=True)
 st.markdown("</div>", unsafe_allow_html=True)
 
 if run:
-    graph = build_graph()
     vehicles = fleet_df.to_dict(orient="records")
-    result = graph.invoke(
-        {
-            "fleet_context": "Mixed urban logistics fleet",
-            "maintenance_query": query,
-            "vehicles": vehicles,
-            "reasoning_trace": [],
-        }
-    )
+    if not vehicles:
+        st.error("Please add at least one vehicle row before running analysis.")
+        st.stop()
+
+    with st.spinner("Running agent workflow..."):
+        graph = build_graph()
+        result = graph.invoke(
+            {
+                "fleet_context": "Mixed urban logistics fleet",
+                "maintenance_query": query,
+                "vehicles": vehicles,
+                "reasoning_trace": [],
+            }
+        )
 
     rec = result.get("final_recommendation", {})
     llm_status = result.get("llm_status", "unknown")
@@ -150,7 +168,7 @@ if run:
         st.markdown('<div class="main-card">', unsafe_allow_html=True)
         st.subheader("Health Summary")
         st.dataframe(health_df, width="stretch")
-        if not health_df.empty:
+        if not health_df.empty and "risk_level" in health_df.columns:
             fig = px.histogram(health_df, x="risk_level", color="risk_level", title="Risk Level Distribution")
             st.plotly_chart(fig, width="stretch")
         st.markdown("</div>", unsafe_allow_html=True)
