@@ -1,260 +1,64 @@
-# 🚗 Fleet Maintenance Assistant
+# 🚀 AutoMind AI
 
-An AI-powered predictive maintenance system that uses machine learning to identify equipment failures before they happen.
+AutoMind AI is a smart AI-powered predictive maintenance platform built for intelligent fleet operations.
 
-## Key Features
-
-✅ **Interactive Fleet Builder**
-- Real-time sidebar sliders to input vehicle telemetry (Engine Temp, Tool Wear, RPM, etc.)
-- Add multiple vehicles to simulate a complete fleet
-- Load a pre-calibrated Sample Fleet for quick testing across all risk levels
-
-✅ **ML-Based Predictive Maintenance**
-- GradientBoostingClassifier trained on 10,000+ industrial machines
-- Predicts specific failure probability (0-100%) for each vehicle in the fleet
-- Categorizes vehicles dynamically into Critical, High, Medium, and Low risk
-
-✅ **Agentic AI Recommendations**
-- Integrates with Groq (Llama 3.1) via LangChain to provide dynamic, context-aware advice
-- Generates specific action plans for each vehicle based on its exact failing parameters
-
-✅ **Modern Analytics Dashboard**
-- Color-coded recommendation cards with specific risk badges
-- Interactive Data Editor to modify fleet telemetry on the fly
-- Fleet analytics charts: Risk Distribution (Pie), Failure Probability (Bar), and Feature Risk Profile (Scatter)
-
-## Project Structure
-
-```
-fleet-maintenance-assistant/
-├── app.py                          # Streamlit application
-├── train.py                        # Model training script
-├── predictor.py                    # ML prediction module
-├── requirements.txt                # Python dependencies
-├── .env                            # Environment variables
-├── .streamlit/
-│   └── config.toml                # Streamlit configuration
-├── Models/                         # Trained ML artifacts
-│   ├── failure_predictor.pkl      # Trained model
-│   ├── feature_scaler.pkl         # Feature normalizer
-│   ├── type_encoder.pkl           # Categorical encoder
-│   └── feature_names.txt          # Feature reference
-├── Raw/                            # Raw data
-│   └── ai4i2020.csv               # Industrial dataset (10,001 machines)
-├── Docs/                           # Documentation
-│   └── maintenance_guidelines.txt  # Industry guidelines
-├── chroma_db/                      # Vector database (for future RAG)
-└── src/                            # Source notebooks (legacy)
-```
-
-## Quick Start
-
-### 1. Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 2. Train the Model (One-Time Setup)
-
-```bash
-python train.py
-```
-
-This will:
-- Load the AI4I 2020 dataset from `Raw/ai4i2020.csv`
-- Clean and preprocess the data
-- Train a GradientBoostingClassifier
-- Save model artifacts to `Models/`
-- Display training metrics (accuracy, ROC-AUC, etc.)
-
-**Expected Output:**
-```
-Training Accuracy: 99.85%
-Test ROC-AUC: 0.9798
-```
-
-### 3. Run the App
-
-```bash
-streamlit run app.py
-```
-
-The app will:
-- Open at `http://localhost:8501`
-- Auto-load the dataset
-- Display machine selection interface
-
-### 4. Use the App
-
-1. **Build Your Fleet**
-   - Use the sidebar sliders to input vehicle telemetry (Engine Temp, Torque, Tool Wear, etc.)
-   - Click "Add vehicle" to add it to the fleet.
-   - Or, simply click **"Load sample fleet"** to populate the app with 4 pre-configured vehicles spanning Critical, High, Medium, and Low risk levels.
-
-2. **Analyze Fleet**
-   - Once your fleet is populated in the Fleet Data Table, click the **"Analyze Fleet"** button.
-   - The ML model will instantly predict the failure probability of every vehicle.
-
-3. **Review AI Recommendations & Charts**
-   - Read the custom AI-generated recommendation cards for vehicles requiring attention.
-   - Review the Risk Distribution and Feature Risk Analysis charts to understand the overall health of your fleet.
-
-## Environment Setup
-
-### .env File
-
-Create a `.env` file with:
-
-```env
-GROQ_API_KEY=your_api_key_here
-LLM_PROVIDER=groq
-LLM_MODEL=llama-3.1-8b-instant
-```
-
-*Note: API key is optional for basic functionality. Without it, system uses deterministic recommendations.*
-
-## Dataset
-
-**AI4I 2020 Predictive Maintenance Dataset**
-- **Size**: 10,001 machines × 14 features
-- **Source**: Auto-loads from `Raw/ai4i2020.csv`
-- **Features**:
-  - Type (Product variant: M/L/H)
-  - Temperature (Air and Process, in Kelvin)
-  - Rotational speed (RPM)
-  - Torque (Nm)
-  - Tool wear (minutes)
-  - Failure modes: TWF, HDF, PWF, OSF, RNF
-
-**Failure Rate**: 3.39% (realistic industrial baseline)
-
-## ML Model
-
-**Algorithm**: GradientBoostingClassifier
-
-**Hyperparameters**:
-- n_estimators: 100
-- max_depth: 5
-- learning_rate: 0.1
-
-**Performance**:
-- Train Accuracy: 99.85%
-- Test ROC-AUC: 0.9798
-- F1-Score: 99%+
-
-**Risk Level Mapping**:
-- `prob < 0.3`: 🟢 Low
-- `0.3 ≤ prob < 0.6`: 🟡 Medium
-- `0.6 ≤ prob < 0.8`: 🟠 High
-- `prob ≥ 0.8`: 🔴 Critical
-
-## Key Components
-
-### app.py
-Streamlit application with:
-- Interactive sidebar for vehicle telemetry input
-- ML prediction interface (analyzes full fleets)
-- LangChain / Groq Agentic AI Recommendation Engine
-- Custom CSS Card UI for highlighting urgent maintenance
-- Fleet analytics charts (Plotly)
-
-### train.py
-Training pipeline:
-- Loads data from `Raw/ai4i2020.csv`
-- Data preprocessing and encoding
-- Model training and evaluation
-- Artifact serialization to `Models/`
-
-### predictor.py
-ML inference module:
-- Loads trained models
-- Handles feature mapping
-- Provides single and batch prediction
-- Includes fallback handling
-
-## Recommendations
-
-### Risk-Based Actions
-
-| Risk Level | Action | Timeline |
-|-----------|--------|----------|
-| 🔴 Critical | URGENT service | Within 24 hours |
-| 🟠 High | Schedule maintenance | Within 3-7 days |
-| 🟡 Medium | Plan preventive maintenance | Within 2-3 weeks |
-| 🟢 Low | Continue operation | Monitor regularly |
-
-## Troubleshooting
-
-### Model Not Found
-```
-Error: ML Model Not Available
-```
-**Solution**: Run `python train.py` to train the model
-
-### Dataset Not Found
-```
-Error: Dataset not found at Raw/ai4i2020.csv
-```
-**Solution**: Ensure `ai4i2020.csv` is in the `Raw/` folder
-
-### Streamlit Port Already in Use
-```
-streamlit run app.py --server.port 8502
-```
-
-## Deployment
-
-### Local Deployment
-```bash
-streamlit run app.py
-```
-
-### Streamlit Cloud
-1. Push to GitHub
-2. Go to [Streamlit Cloud](https://share.streamlit.io)
-3. Deploy from repository
-4. Add secrets:
-   - `GROQ_API_KEY`
-
-### Docker
-```bash
-docker run -p 8501:8501 streamlit/streamlit-docker
-```
-
-## Performance Notes
-
-- **First Load**: ~2-3 seconds (data loading)
-- **Prediction**: <100ms per machine
-- **Memory Usage**: ~200MB (models + data)
-- **Batch Processing**: Supports 100+ machines
-
-## System Requirements
-
-- Python 3.8+
-- 2GB RAM (minimum)
-- Internet (for embeddings download on first run)
-
-## Dependencies
-
-- **ML**: scikit-learn, pandas, numpy
-- **UI**: streamlit, plotly
-- **LLM**: langchain-groq (optional)
-- **Data**: chromadb, sentence-transformers
-- **Config**: python-dotenv
-
-See `requirements.txt` for exact versions.
-
-## Safety Disclaimer
-
-⚠️ This system provides **AI-assisted recommendations only**. Final maintenance decisions must be validated by certified technicians and must follow:
-- Manufacturer guidelines
-- Industry standards
-- Regulatory requirements
-
-Always prioritize safety and rely on qualified professionals for critical decisions.
+It helps businesses monitor vehicle health, predict failures early, reduce downtime, and optimize maintenance planning using Machine Learning + Streamlit Dashboard + AI Recommendations.
 
 ---
 
-**Version**: 2.0 (ML-Enhanced with Auto-Load)  
-**Status**: ✅ Production Ready
+# ✨ Features
+
+## ✅ Smart Vehicle Monitoring
+
+- Add vehicle details using an interactive control panel
+- Track Engine Temperature, Tool Wear, Brake Wear, Battery Health, and more
+- Real-time fleet monitoring dashboard
+
+---
+
+## ✅ Predictive Maintenance System
+
+- Detects possible machine failures before breakdown
+- Calculates Failure Probability (0–100%)
+- Automatically classifies vehicles into:
+
+🔴 High Risk  
+🟠 Medium Risk  
+🟢 Low Risk
+
+---
+
+## ✅ AI-Powered Recommendations
+
+- Smart maintenance suggestions for risky vehicles
+- Priority-based service planning
+- Preventive maintenance workflow
+
+---
+
+## ✅ Interactive Analytics Dashboard
+
+- Premium dark UI with modern dashboard design
+- Live Data Table for fleet monitoring
+- Risk Visualization using interactive charts
+- Failure Probability Analysis with Plotly
+
+---
+
+# 📁 Project Structure
+
+```bash
+AutoMind-AI/
+│
+├── app.py                  # Main Streamlit Dashboard
+├── predictor.py            # Prediction logic
+├── train.py                # ML model training
+├── requirements.txt        # Project dependencies
+├── README.md               # Documentation
+│
+├── Models/                 # Saved trained models
+├── Raw/                    # Raw datasets
+├── docs/                   # Maintenance guidelines
+├── chroma_db/              # Vector database
+├── src/                    # Supporting source files
+└── .streamlit/             # Streamlit config
