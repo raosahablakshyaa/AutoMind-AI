@@ -1,293 +1,292 @@
-# AutoMind AI — Fleet Maintenance Assistant
-## Capstone Project Report
+\documentclass[12pt,a4paper]{article}
 
-**Course**: Generative AI Capstone  
-**Status**: Production Ready  
-**Date**: April 2025
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{titlesec}
 
----
+\titleformat{\section}{\large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{1em}{}
 
-## 1. Project Overview
+\title{
+    \textbf{AutoMind AI --- Fleet Maintenance Assistant} \\
+    \large Capstone Project Report
+}
 
-AutoMind AI is an AI-powered predictive maintenance platform for fleet operations. It combines a supervised machine learning model with an agentic AI recommendation engine to identify vehicles at risk of failure before breakdowns occur — enabling proactive, cost-effective maintenance scheduling.
+\author{}
+\date{April 2025}
+
+\begin{document}
+
+\maketitle
+
+\begin{center}
+\textbf{Course:} Generative AI Capstone \\
+\textbf{Status:} Production Ready
+\end{center}
+
+\vspace{1cm}
+
+\section{Project Overview}
+
+AutoMind AI is an AI-powered predictive maintenance platform for fleet operations. It combines a supervised machine learning model with an agentic AI recommendation engine to identify vehicles at risk of failure before breakdowns occur, enabling proactive and cost-effective maintenance scheduling.
 
 The system is built as an interactive Streamlit web application and is designed for fleet managers who need real-time, data-driven maintenance decisions without requiring data science expertise.
 
----
-
-## 2. Problem Statement
+\section{Problem Statement}
 
 Unplanned equipment failures in industrial and commercial fleets result in costly downtime, safety hazards, and reactive maintenance cycles. Traditional maintenance schedules are time-based rather than condition-based, leading to either over-maintenance (wasted cost) or under-maintenance (unexpected failures).
 
 This project addresses the problem by:
-- Predicting failure probability per vehicle using ML
-- Categorizing vehicles into actionable risk tiers
-- Generating context-aware maintenance recommendations via an LLM agent
 
----
+\begin{itemize}
+    \item Predicting failure probability per vehicle using ML
+    \item Categorizing vehicles into actionable risk tiers
+    \item Generating context-aware maintenance recommendations via an LLM agent
+\end{itemize}
 
-## 3. Dataset
+\section{Dataset}
 
-**Source**: AI4I 2020 Predictive Maintenance Dataset  
-**Size**: 10,001 machines × 14 features  
-**Failure Rate**: 3.39% (realistic industrial baseline)
+\textbf{Source:} AI4I 2020 Predictive Maintenance Dataset \\
+\textbf{Size:} 10,001 machines $\times$ 14 features \\
+\textbf{Failure Rate:} 3.39\%
 
-| Feature | Description |
-|---|---|
-| Type | Product variant (M / L / H) |
-| Air temperature [K] | Ambient temperature |
-| Process temperature [K] | Operating temperature |
-| Rotational speed [rpm] | Spindle speed |
-| Torque [Nm] | Applied torque |
-| Tool wear [min] | Cumulative tool usage |
-| TWF, HDF, PWF, OSF, RNF | Specific failure mode flags |
-| Machine failure | Target label (0 / 1) |
+\begin{longtable}{|p{5cm}|p{8cm}|}
+\hline
+\textbf{Feature} & \textbf{Description} \\
+\hline
+Type & Product variant (M / L / H) \\
+\hline
+Air temperature [K] & Ambient temperature \\
+\hline
+Process temperature [K] & Operating temperature \\
+\hline
+Rotational speed [rpm] & Spindle speed \\
+\hline
+Torque [Nm] & Applied torque \\
+\hline
+Tool wear [min] & Cumulative tool usage \\
+\hline
+TWF, HDF, PWF, OSF, RNF & Specific failure mode flags \\
+\hline
+Machine failure & Target label (0 / 1) \\
+\hline
+\end{longtable}
 
-The dataset is stored at `Raw/ai4i2020.csv` and auto-loads at application startup.
+The dataset is stored in \texttt{Raw/ai4i2020.csv} and loads automatically at application startup.
 
----
+\section{System Architecture}
 
-## 4. System Architecture
+\begin{verbatim}
+Streamlit UI (app.py)
+Sidebar Input -> Fleet Table -> Metrics -> Charts
+        |
+        v
+predictor.py
+FailurePredictor (ML Inference)
+        |
+        v
+Models/
+failure_predictor.pkl
+feature_scaler.pkl
+type_encoder.pkl
+        |
+        v
+LangChain + Groq (LLM)
+Agentic Recommendations
+RAG via ChromaDB
+\end{verbatim}
 
-```
-┌─────────────────────────────────────────────────────┐
-│                   Streamlit UI (app.py)              │
-│  Sidebar Input → Fleet Table → Metrics → Charts     │
-└────────────────────┬────────────────────────────────┘
-                     │
-          ┌──────────▼──────────┐
-          │   predictor.py      │
-          │  FailurePredictor   │
-          │  (ML Inference)     │
-          └──────────┬──────────┘
-                     │
-     ┌───────────────▼───────────────┐
-     │         Models/               │
-     │  failure_predictor.pkl        │
-     │  feature_scaler.pkl           │
-     │  type_encoder.pkl             │
-     └───────────────────────────────┘
-                     │
-     ┌───────────────▼───────────────┐
-     │   LangChain + Groq (LLM)      │
-     │   Agentic Recommendations     │
-     │   RAG via ChromaDB            │
-     └───────────────────────────────┘
-```
+\subsection{Key Components}
 
-### Key Components
+\textbf{train.py}
 
-**`train.py`** — One-time training pipeline:
-- Loads `Raw/ai4i2020.csv`
-- Encodes categorical features (LabelEncoder)
-- Scales features (StandardScaler)
-- Trains GradientBoostingClassifier
-- Serializes model artifacts to `Models/`
+\begin{itemize}
+    \item Loads dataset from Raw/ai4i2020.csv
+    \item Encodes categorical features using LabelEncoder
+    \item Scales features using StandardScaler
+    \item Trains GradientBoostingClassifier
+    \item Saves model artifacts into Models/
+\end{itemize}
 
-**`predictor.py`** — Inference module:
-- Loads trained artifacts at startup
-- Maps raw vehicle telemetry to model feature space
-- Returns failure probability, predicted label, confidence, and risk level
-- Supports single and batch prediction
+\textbf{predictor.py}
 
-**`app.py`** — Streamlit application:
-- Sidebar form for vehicle telemetry input
-- Fleet data table with live editing
-- ML-based risk scoring per vehicle
-- Plotly bar chart for failure probability visualization
-- AI-generated action cards for high-risk vehicles
+\begin{itemize}
+    \item Loads trained artifacts at startup
+    \item Maps raw telemetry into ML feature space
+    \item Returns failure probability and risk level
+    \item Supports single and batch prediction
+\end{itemize}
 
----
+\textbf{app.py}
 
-## 5. Machine Learning Model
+\begin{itemize}
+    \item Sidebar form for vehicle input
+    \item Fleet data table with editing
+    \item ML-based risk scoring
+    \item Plotly bar chart visualization
+    \item AI-generated action cards
+\end{itemize}
 
-### Algorithm
-`GradientBoostingClassifier` (scikit-learn)
+\section{Machine Learning Model}
 
-### Hyperparameters
-| Parameter | Value |
-|---|---|
-| n_estimators | 100 |
-| max_depth | 5 |
-| learning_rate | 0.1 |
-| random_state | 42 |
+\subsection{Algorithm}
 
-### Training Setup
-- Train/test split: 80/20, stratified by failure label
-- Feature scaling: StandardScaler
-- Categorical encoding: LabelEncoder on `Type` column
+GradientBoostingClassifier (scikit-learn)
 
-### Performance
-| Metric | Value |
-|---|---|
-| Training Accuracy | 99.85% |
-| Test ROC-AUC | 0.9798 |
-| F1-Score | 99%+ |
-| Training Samples | 8,000 |
-| Test Samples | 2,001 |
+\subsection{Hyperparameters}
 
-### Risk Level Mapping
-| Risk Level | Probability Range | Recommended Action | Timeline |
-|---|---|---|---|
-| 🔴 Critical | ≥ 80% | Urgent service | Within 24 hours |
-| 🟠 High | 60–80% | Schedule maintenance | Within 3–7 days |
-| 🟡 Medium | 30–60% | Plan preventive maintenance | Within 2–3 weeks |
-| 🟢 Low | < 30% | Continue operation | Monitor regularly |
+\begin{longtable}{|p{5cm}|p{5cm}|}
+\hline
+\textbf{Parameter} & \textbf{Value} \\
+\hline
+n\_estimators & 100 \\
+\hline
+max\_depth & 5 \\
+\hline
+learning\_rate & 0.1 \\
+\hline
+random\_state & 42 \\
+\hline
+\end{longtable}
 
----
+\subsection{Performance}
 
-## 6. Agentic AI Workflow
+\begin{longtable}{|p{5cm}|p{5cm}|}
+\hline
+\textbf{Metric} & \textbf{Value} \\
+\hline
+Training Accuracy & 99.85\% \\
+\hline
+Test ROC-AUC & 0.9798 \\
+\hline
+F1-Score & 99\%+ \\
+\hline
+Training Samples & 8,000 \\
+\hline
+Test Samples & 2,001 \\
+\hline
+\end{longtable}
 
-The recommendation engine follows a structured LangGraph-inspired pipeline:
+\section{Risk Level Mapping}
 
-```
-Fleet Input
-    │
-    ▼
-Risk Analyzer Node
-(Deterministic ML scoring)
-    │
-    ▼
-RAG Retrieval Node
-(ChromaDB + sentence-transformers)
-    │
-    ▼
-Recommendation Node
-(LangChain + Groq / Llama 3.1)
-    │
-    ▼
-Structured Output
-(problem_understanding, health_summary,
- action_plan, sources, safety_disclaimer)
-```
+\begin{longtable}{|p{3cm}|p{4cm}|p{5cm}|p{4cm}|}
+\hline
+\textbf{Risk Level} & \textbf{Probability Range} & \textbf{Recommended Action} & \textbf{Timeline} \\
+\hline
+Critical & $\geq$ 80\% & Urgent service & Within 24 hours \\
+\hline
+High & 60--80\% & Schedule maintenance & Within 3--7 days \\
+\hline
+Medium & 30--60\% & Preventive maintenance & Within 2--3 weeks \\
+\hline
+Low & $<$ 30\% & Continue operation & Monitor regularly \\
+\hline
+\end{longtable}
 
-### Hallucination Mitigation Strategies
-- Retrieval-grounded responses via ChromaDB vector store
-- Explicit safety disclaimers on every recommendation
-- Conservative fallback policy when LLM confidence is low
-- Pydantic-validated structured output schema
-- Deterministic ML scoring as the authoritative risk signal
+\section{Technology Stack}
 
-### Fallback Behavior
-If no `GROQ_API_KEY` is provided, the system falls back to deterministic rule-based recommendations derived directly from the ML risk scores — ensuring the app remains fully functional without an LLM.
+\begin{longtable}{|p{5cm}|p{7cm}|}
+\hline
+\textbf{Layer} & \textbf{Technology} \\
+\hline
+Language & Python 3.8+ \\
+\hline
+UI & Streamlit \\
+\hline
+ML & scikit-learn \\
+\hline
+Data & pandas, numpy \\
+\hline
+Visualization & Plotly Express \\
+\hline
+LLM & LangChain + Groq \\
+\hline
+Vector DB & ChromaDB \\
+\hline
+Embeddings & sentence-transformers \\
+\hline
+Configuration & python-dotenv \\
+\hline
+\end{longtable}
 
----
+\section{Project Structure}
 
-## 7. Application Features
-
-### Fleet Builder (Sidebar)
-- Sliders for: Engine Temp, Tool Wear, Brake Wear, Battery Health
-- Vehicle Type selector (L / M / H)
-- "Add Vehicle" form submission
-- "Load Demo Data" for quick testing
-- "Reset Dashboard" to clear fleet
-
-### Fleet Intelligence Dashboard
-- Editable fleet data table (pandas DataFrame)
-- Risk metrics: High / Medium / Low vehicle counts
-- Failure Probability bar chart (Plotly, color-coded by risk)
-- Immediate alert banner for high-risk vehicles with action items
-
-### AI Recommendations
-- Per-vehicle action cards for high-risk vehicles
-- Specific failure parameter callouts
-- Timeline-based service instructions
-
----
-
-## 8. Technology Stack
-
-| Layer | Technology |
-|---|---|
-| Language | Python 3.8+ |
-| UI | Streamlit |
-| ML | scikit-learn (GradientBoostingClassifier) |
-| Data | pandas, numpy |
-| Visualization | Plotly Express |
-| LLM | LangChain + Groq (Llama 3.1-8b-instant) |
-| Vector DB | ChromaDB |
-| Embeddings | sentence-transformers |
-| Config | python-dotenv |
-
----
-
-## 9. Project Structure
-
-```
-gen_ai_capstone2/
-├── app.py                      # Streamlit application
-├── train.py                    # Model training script
-├── predictor.py                # ML inference module
-├── requirements.txt            # Python dependencies
-├── .env                        # API keys (not committed)
-├── .streamlit/
-│   └── config.toml             # UI theme
+\begin{verbatim}
+AutoMind-AI/
+├── app.py
+├── train.py
+├── predictor.py
+├── requirements.txt
+├── README.md
 ├── Models/
-│   ├── failure_predictor.pkl
-│   ├── feature_scaler.pkl
-│   ├── type_encoder.pkl
-│   └── feature_names.txt
 ├── Raw/
-│   └── ai4i2020.csv
 ├── docs/
-│   ├── agent_workflow.md
-│   └── maintenance_guidelines.txt
-├── chroma_db/                  # Vector store
-└── src/                        # Exploratory notebooks
-```
+├── chroma_db/
+├── src/
+└── .streamlit/
+\end{verbatim}
 
----
+\section{Setup and Deployment}
 
-## 10. Setup & Deployment
+\subsection{Local Setup}
 
-### Local Setup
-```bash
+\begin{verbatim}
 pip install -r requirements.txt
-python train.py          # One-time model training
-streamlit run app.py     # Launch at http://localhost:8501
-```
+python train.py
+streamlit run app.py
+\end{verbatim}
 
-### Environment Variables (`.env`)
-```
+\subsection{Environment Variables (.env)}
+
+\begin{verbatim}
 GROQ_API_KEY=your_api_key_here
 LLM_PROVIDER=groq
 LLM_MODEL=llama-3.1-8b-instant
-```
+\end{verbatim}
 
-### Streamlit Cloud
-1. Push repository to GitHub
-2. Deploy via [share.streamlit.io](https://share.streamlit.io)
-3. Add `GROQ_API_KEY` as a secret
+\section{Limitations and Future Work}
 
----
+\subsection{Current Limitations}
 
-## 11. Limitations & Future Work
+\begin{itemize}
+    \item Simplified rule-based scoring in app.py
+    \item No real-time telemetry ingestion
+    \item Partial RAG integration
+\end{itemize}
 
-### Current Limitations
-- The app's rule-based risk scoring in `app.py` uses simplified thresholds (Engine Temp, Tool Wear, Brake Wear, Battery Health) rather than the full trained ML model — the `predictor.py` module exists but is not yet wired into the Streamlit UI
-- No real-time data ingestion; telemetry is entered manually
-- RAG retrieval is set up but not fully integrated into the live recommendation flow
+\subsection{Future Enhancements}
 
-### Potential Enhancements
-- Wire `predictor.py` into `app.py` for full ML-backed predictions in the UI
-- Real-time IoT data streaming (MQTT / AWS IoT Core)
-- REST API layer (FastAPI) for programmatic access
-- Multi-model ensemble for improved robustness
-- Auto-retraining pipeline as new failure data accumulates
-- Mobile-friendly frontend
+\begin{itemize}
+    \item Full predictor.py integration into app.py
+    \item Real-time IoT streaming
+    \item FastAPI REST API layer
+    \item Multi-model ensemble system
+    \item Auto-retraining pipeline
+    \item Mobile-friendly frontend
+\end{itemize}
 
----
+\section{Conclusion}
 
-## 12. Conclusion
+AutoMind AI demonstrates a complete end-to-end Generative AI + ML system for industrial predictive maintenance.
 
-AutoMind AI demonstrates a complete end-to-end Generative AI + ML system for industrial predictive maintenance. The project integrates:
+The project integrates:
 
-- A high-accuracy supervised ML model (99.85% accuracy, 0.9798 ROC-AUC)
-- An agentic LLM recommendation engine with RAG grounding
-- A production-ready interactive dashboard
+\begin{itemize}
+    \item High-accuracy supervised ML model
+    \item Agentic LLM recommendation engine
+    \item Production-ready interactive dashboard
+\end{itemize}
 
-The system is deployable locally or on Streamlit Cloud and is designed to be extended with real-time data sources and additional AI capabilities.
+The system is deployable locally and on Streamlit Cloud and is designed for future extension with real-time data and advanced AI workflows.
 
----
+\vspace{0.5cm}
 
-*This system provides AI-assisted recommendations only. Final maintenance decisions must be validated by certified technicians in accordance with manufacturer guidelines and regulatory requirements.*
+\textit{This system provides AI-assisted recommendations only. Final maintenance decisions must be validated by certified technicians according to manufacturer guidelines and regulatory requirements.}
+
+\end{document}
