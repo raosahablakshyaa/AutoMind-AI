@@ -11,3 +11,4 @@ pandas
 plotly
 sentence-transformers
 torchvision
+scikit-learn
